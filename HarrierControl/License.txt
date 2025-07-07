@@ -1,0 +1,67 @@
+
+Active Silicon Ltd. September 2024.
+Harrier Sample Camera Control Applications Binary Software License & Warranty Agreement.
+
+1. Active Silicon Ltd (hereafter referred to as "ASL") hereby grants you a non-exclusive, non-transferable 
+licence to use, copy, merge, demonstrate and distribute the enclosed software 
+(HarrierControl.exe, HCGUI.exe, HarrierCOMPortDiscovery.exe, SetBaudRate.exe, etc.), 
+in object code form, and media on which it is contained 
+(the "Licensed Software") in accordance with this Agreement. 
+
+You do not obtain title to the Licensed Software.
+
+Any distributed portion of the Licensed Software will continue to be subject to the Terms and Conditions 
+of this Agreement and you must reproduce and include all Copyright notices and Licenses with the 
+distributed software and on the media and documentation that accompany it. Under this License you must 
+distribute the entire work as a whole (including executable, documentation and this license file). 
+This License will therefore apply to the whole of the work, and all its parts, regardless of how they 
+are packaged. This License gives no permission to sublicense the work in any way, but it does not 
+invalidate such permission if you have separately received it. 
+
+Any merged portion of the Licensed Software will continue to be subject to the Terms and Conditions of 
+this Agreement and you must reproduce and include all Copyright notices and Licenses in the merged 
+program and on the media and documentation that accompany it.  
+
+2. You may use the Licensed Software subject to the Terms and Conditions of this Agreement and only 
+with computing systems that contain, or connect to, ASL hardware products.
+
+3. You may distribute the Licensed Software subject to the Terms and Conditions of this Agreement and 
+only as an integral part of a computing system containing ASL hardware products. 
+You shall be responsible for installation, support and maintenance of any Licensed Software that is 
+furnished to a user and shall indemnify and hold ASL harmless from any and all claims, demands, 
+liability, expenses and costs, including all legal costs, which are related in any way to 
+your acts or omissions.
+
+4. The Licensed Software is not warranted and ASL is under no obligation to support, maintain or 
+provide fixes to reported failures. 
+
+5. ASL DOES NOT MAKE ANY WARRANTY OR REPRESENTATIONS OF ANY KIND, EXPRESSED OR IMPLIED, 
+WITH RESPECT TO THE LICENSED SOFTWARE AND SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES 
+OF SATISFACTORY QUALITY AND/OR FITNESS FOR ANY PARTICULAR PURPOSE OR USE. DO NOT USE THE 
+LICENSED SOFTWARE IN ANY CASE WHERE SIGNIFICANT DAMAGE OR INJURY TO PERSONS, PROPERTY 
+OR BUSINESS MAY HAPPEN IF AN ERROR OCCURS. YOU EXPRESSLY ASSUME ALL RISK FOR SUCH USE. 
+
+6. UNDER NO CIRCUMSTANCES WILL ASL BE LIABLE FOR ANY CONSEQUENTIAL LOSS (INCLUDING ANY 
+COSTS, CLAIMS DAMAGES AND EXPENSES CALCULATED BY REFERENCE TO PROFITS, INCOME, 
+PRODUCTION OR ACCRUALS), INCIDENTAL, SPECIAL OR EXEMPLARY DAMAGES EVEN IF APPRAISED OF 
+THE LIKELIHOOD OF SUCH DAMAGES OCCURRING. 
+
+7. THE LICENSED SOFTWARE CONTAINS CONFIDENTIAL INFORMATION AND TRADE SECRETS 
+PROPRIETARY TO ASL. DISASSEMBLY OR DECOMPILATION OF THE SOFTWARE IS PROHIBITED. 
+No parts of the enclosed Software or documentation may be reproduced in any form by any means 
+without prior written consent of ASL or as otherwise permitted in this Agreement. 
+
+8. You warrant that you will not use the Licensed Software except as herein permitted or authorized. 
+You will indemnify ASL for any loss or expense, including reasonable legal costs, incurred by ASL in 
+defending any claim arising from use of the Licensed Software or from your failure to perform your 
+obligations under this License Agreement. 
+
+9. This software is provided is provided as is for test and demonstration purposes only. 
+It may only be used by system integrators and is not to be used in commercial applications or end user applications. 
+
+10. The invalidity of any portion or provision of this License Agreement shall not affect any other portions 
+or provisions. This License Agreement shall be governed by the laws of England. This License Agreement 
+is the entire agreement between you and ASL, and it supersedes any prior agreement, oral or written, 
+and any other communication between you and ASL relating to the subject matter of this License 
+Agreement. Any amendment or modification of this License Agreement must be in writing and signed by 
+both parties.
