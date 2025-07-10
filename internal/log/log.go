@@ -1,11 +1,11 @@
-// Package log provides a logging interface for the Evolv application.
-// Log levels are:
-//   - Debug (Will only log in development builds)
+// Il pacchetto log provvede un'interfaccia di logging.
+// I livelli di log sono:
+//   - Debug (Solo nelle build di sviluppo)
 //   - Info
 //   - Warn
 //   - Error
-//   - Panic (Will panic after logging)
-//   - Fatal (Will call os.Exit(1) after logging)
+//   - Panic (Chiama panic() dopo aver loggato)
+//   - Fatal (Chiama os.Exit(1) dopo aver loggato)
 package log
 
 import (

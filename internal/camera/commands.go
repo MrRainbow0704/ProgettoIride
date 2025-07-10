@@ -20,7 +20,7 @@ const (
 	cmd_dual_lvds      cmd = "81,01,04,24,74,00,01,FF"
 	cmd_single_lvds    cmd = "81,01,04,24,74,00,00,FF"
 	cmd_zoom           cmd = "81,01,04,47,0%s,0%s,0%s,0%s,FF"
-	colour_hue         cmd = "81,01,04,4F,00,00,00,00,FF"
+	cmd_colour_hue     cmd = "81,01,04,4F,00,00,00,00,FF"
 	cmd_lr_reverse_on  cmd = "81,01,04,61,02,FF"
 	cmd_lr_reverse_off cmd = "81,01,04,61,03,FF"
 	cmd_flip_on        cmd = "81,01,04,66,02,FF"
@@ -30,10 +30,11 @@ const (
 	cmd_cib_reset      cmd = "82,01,0A,00,FF"
 	cmd_cib_x_hair_on  cmd = "82,01,0A,03,01,FF"
 	cmd_cib_x_hair_off cmd = "82,01,0A,03,00,FF"
-	query_version      cmd = "82,09,0A,00,FF"
-	query_info         cmd = "82,09,0A,01,FF"
-	query_health       cmd = "82,09,0A,02,FF"
-	query_error        cmd = "82,09,0A,05,FF"
+	cmd_query_version  cmd = "82,09,0A,00,FF"
+	cmd_query_info     cmd = "82,09,0A,01,FF"
+	cmd_query_health   cmd = "82,09,0A,02,FF"
+	cmd_query_hardware cmd = "82,09,0A,04,FF"
+	cmd_query_error    cmd = "82,09,0A,05,FF"
 )
 
 func sendCommand(c cmd) error {
@@ -43,18 +44,18 @@ func sendCommand(c cmd) error {
 	return nil
 }
 
-func sendCommandWithOutput(c cmd) ([]uint8, error) {
+func sendCommandWithOutput(c cmd) ([]byte, error) {
 	out, err := exec.Command(Prog, "USB3", string(c)).Output()
 	if err != nil {
 		return nil, err
 	}
-	bytes := []uint8{}
+	bytes := []byte{}
 	for b := range strings.SplitSeq(strings.TrimSpace(string(out)), " ") {
-		byte, err := strconv.ParseUint(b, 16, 8)
+		u, err := strconv.ParseUint(b, 16, 8)
 		if err != nil {
 			return nil, err
 		}
-		bytes = append(bytes, uint8(byte))
+		bytes = append(bytes, byte(u))
 	}
 	return bytes, nil
 }

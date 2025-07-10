@@ -1,3 +1,5 @@
+// Il pacchetto camera espone delle funzioni per controllare
+// una telecamera ActiveSilicon.
 package camera
 
 import (

@@ -2,18 +2,18 @@ package camera
 
 import "fmt"
 
-type version struct {
+type CameraVersion struct {
 	Major uint8
 	Minor uint8
 	Sub   uint8
 }
 
-type cameraInfo struct {
+type CameraInfo struct {
 	Revision uint8
 	Variant  uint8
 }
 
-type cameraHealth struct {
+type CameraHealth struct {
 	VoltageOk              bool
 	LLVDSPLLClockOk        bool
 	PixelPLLClockOk        bool
@@ -23,12 +23,18 @@ type cameraHealth struct {
 	Temperature            uint8
 }
 
-type CameraError struct {
-	code uint8
+type CameraHardwareInfo struct {
+	ProjectCode  uint8
+	ProjectBoard uint8
+	BoardIssue   uint8
+	BuildMSB     uint8
+	BuildLSB     uint8
 }
 
+type CameraError uint8
+
 func (c CameraError) Error() string {
-	switch c.code {
+	switch c {
 	case 0x00:
 		return "No error"
 	case 0x01:
@@ -66,39 +72,39 @@ func (c CameraError) Error() string {
 	}
 }
 
-func GetVersion() (version, error) {
-	out, err := sendCommandWithOutput(query_version)
+func GetVersion() (CameraVersion, error) {
+	out, err := sendCommandWithOutput(cmd_query_version)
 	if err != nil {
-		return version{}, err
+		return CameraVersion{}, err
 	}
 	// Expected output: [0xA0, 0x50, r1, r2, r3, 0xFF]
 	// r1 = major version
 	// r2 = minor version
 	// r3 = sub version
 	if out[0] != 0xA0 || out[1] != 0x50 || out[5] != 0xFF {
-		return version{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+		return CameraVersion{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
 	}
-	return version{Major: out[2], Minor: out[3], Sub: out[4]}, nil
+	return CameraVersion{Major: out[2], Minor: out[3], Sub: out[4]}, nil
 }
 
-func GetInfo() (cameraInfo, error) {
-	out, err := sendCommandWithOutput(query_info)
+func GetInfo() (CameraInfo, error) {
+	out, err := sendCommandWithOutput(cmd_query_info)
 	if err != nil {
-		return cameraInfo{}, err
+		return CameraInfo{}, err
 	}
 	// Expected output: [0xA0, 0x50, r1, r2, 0xFF]
 	// r1 = hardware revision
 	// r2 = board variant
 	if out[0] != 0xA0 || out[1] != 0x50 || out[4] != 0xFF {
-		return cameraInfo{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+		return CameraInfo{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
 	}
-	return cameraInfo{Revision: out[2], Variant: out[3]}, nil
+	return CameraInfo{Revision: out[2], Variant: out[3]}, nil
 }
 
-func GetHealth() (cameraHealth, error) {
-	out, err := sendCommandWithOutput(query_health)
+func GetHealth() (CameraHealth, error) {
+	out, err := sendCommandWithOutput(cmd_query_health)
 	if err != nil {
-		return cameraHealth{}, err
+		return CameraHealth{}, err
 	}
 	// Expected output: [0xA0, 0x50, r1, r2, 0xFF]
 	// r1 = status
@@ -112,10 +118,10 @@ func GetHealth() (cameraHealth, error) {
 	//   Bit 7 = Error state
 	// r2 =  temperature (+60° offset)
 	if out[0] != 0xA0 || out[1] != 0x50 || out[4] != 0xFF {
-		return cameraHealth{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+		return CameraHealth{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
 	}
 	s := out[2]
-	return cameraHealth{
+	return CameraHealth{
 		VoltageOk:              (s & 0b1) != 0,
 		LLVDSPLLClockOk:        (s & 0b10) != 0,
 		PixelPLLClockOk:        (s & 0b1000) != 0,
@@ -126,15 +132,38 @@ func GetHealth() (cameraHealth, error) {
 	}, nil
 }
 
-func GetError() (CameraError, error) {
-	out, err := sendCommandWithOutput(query_info)
+func GetHardwareInfo() (CameraHardwareInfo, error) {
+	out, err := sendCommandWithOutput(cmd_query_health)
 	if err != nil {
-		return CameraError{}, err
+		return CameraHardwareInfo{}, err
+	}
+	// Expected output: [0xA0, 0x50, r1, r2, r3, r4, r5, 0xFF]
+	// r1 = project code
+	// r2 = project board
+	// r3 = board issue
+	// r4 = build MSB
+	// r5 = build LSB
+	if out[0] != 0xA0 || out[1] != 0x50 || out[7] != 0xFF {
+		return CameraHardwareInfo{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	}
+	return CameraHardwareInfo{
+		ProjectCode:  out[2],
+		ProjectBoard: out[3],
+		BoardIssue:   out[4],
+		BuildMSB:     out[5],
+		BuildLSB:     out[6],
+	}, nil
+}
+
+func GetError() (CameraError, error) {
+	out, err := sendCommandWithOutput(cmd_query_info)
+	if err != nil {
+		return 0, err
 	}
 	// Expected output: [0xA0, 0x50, r1, 0xFF]
 	// r1 = error
 	if out[0] != 0xA0 || out[1] != 0x50 || out[3] != 0xFF {
-		return CameraError{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+		return 0, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
 	}
-	return CameraError{code: out[2]}, nil
+	return CameraError(out[2]), nil
 }

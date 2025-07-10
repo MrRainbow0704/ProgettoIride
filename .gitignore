@@ -32,6 +32,9 @@ $RECYCLE.BIN/
 *.dll
 *.so
 *.dylib
+*.syso
+tmp
+bin
 
 # Test binary, built with `go test -c`
 *.test

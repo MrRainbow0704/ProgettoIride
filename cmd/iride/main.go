@@ -1,3 +1,4 @@
+// Entrypoint per l'applicazione Iride.exe
 package main
 
 import (
@@ -8,15 +9,17 @@ import (
 
 	hc "github.com/MrRainbow0704/ProgettoIride/HarrierControl"
 	"github.com/MrRainbow0704/ProgettoIride/internal/camera"
+	"github.com/MrRainbow0704/ProgettoIride/internal/gui"
 	"github.com/MrRainbow0704/ProgettoIride/internal/version"
 )
 
+var v = flag.Bool("v", false, "query version")
+
 func main() {
-	v := flag.Bool("v", false, "query version")
 	flag.Parse()
 	if *v {
 		fmt.Println(version.Get())
-		return
+		os.Exit(0)
 	}
 
 	if err := run(); err != nil {
@@ -30,5 +33,6 @@ func run() error {
 			return err
 		}
 	}
-	return nil
+	_, err := gui.Window().Run()
+	return err
 }
