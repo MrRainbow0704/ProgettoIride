@@ -1,7 +1,9 @@
-#include <iostream>
-
-using namespace std;
-
 extern "C" {
-void test() { cout << "TEST FUNCTION RAN" << endl; }
+char* captureFrame() {
+    char f[] = "this/is/a/file.test";
+    int size = sizeof(f) * sizeof(char);
+    // char* outfile = (char*)malloc(size);
+    char* outfile = new char[size];
+    return f;
+}
 }

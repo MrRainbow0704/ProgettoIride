@@ -2,12 +2,16 @@ package gui
 
 import (
 	"github.com/MrRainbow0704/ProgettoIride/internal/camera"
+	"github.com/MrRainbow0704/ProgettoIride/internal/video"
 
 	"github.com/lxn/walk"
 	d "github.com/lxn/walk/declarative"
 )
 
-var mw = new(walk.MainWindow)
+var (
+	mw        = new(walk.MainWindow)
+	killVideo = false
+)
 
 func Window() d.MainWindow {
 	icon, err := walk.NewIconFromFile("iride.ico")
@@ -16,8 +20,8 @@ func Window() d.MainWindow {
 	}
 
 	videoStream := new(walk.ImageView)
-
 	go videoLoop(videoStream)
+
 	return d.MainWindow{
 		AssignTo: &mw,
 		Title:    "Iride",
@@ -71,20 +75,28 @@ func Window() d.MainWindow {
 				},
 			},
 			d.Action{Text: "E&xit", OnTriggered: func() { mw.Close() }},
+			d.Action{Text: "&Kill", OnTriggered: func() { killVideo = true }},
 		},
 		Children: []d.Widget{
-			d.ImageView{AssignTo: &videoStream, Background: d.SolidColorBrush{Color: walk.RGB(255,0,0)}},
+			d.ImageView{AssignTo: &videoStream, Background: d.SolidColorBrush{Color: walk.RGB(255, 0, 0)}},
 		},
 	}
 }
 
 func videoLoop(v *walk.ImageView) {
 	for {
-		// i, err :=
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// v.SetImage(i)
-		break
+		if killVideo {
+			break
+		}
+
+		out := video.CaptureFrame()
+		i, err := walk.Resources.Image(out)
+		if err != nil {
+			continue
+		}
+		err = v.SetImage(i)
+		if err != nil {
+			continue
+		}
 	}
 }

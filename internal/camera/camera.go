@@ -10,6 +10,8 @@ import (
 var (
 	Prog    string
 	ProgDir string
+	TmpDir  string
+	RootDir string
 )
 
 func init() {
@@ -17,7 +19,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	ProgDir = filepath.Join(h, ".iride", "bin")
+	RootDir = filepath.Join(h, ".iride")
+	ProgDir = filepath.Join(RootDir, "bin")
+	TmpDir = filepath.Join(RootDir, "tmp")
 	Prog = filepath.Join(ProgDir, "HarrierControl.exe")
 }
 
