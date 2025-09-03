@@ -11,6 +11,7 @@ import (
 	"github.com/MrRainbow0704/ProgettoIride/internal/camera"
 	"github.com/MrRainbow0704/ProgettoIride/internal/gui"
 	"github.com/MrRainbow0704/ProgettoIride/internal/version"
+	"github.com/MrRainbow0704/ProgettoIride/internal/video"
 	"github.com/lxn/walk"
 )
 
@@ -29,12 +30,19 @@ func main() {
 }
 
 func run() error {
-	walk.Resources.SetRootDirPath(camera.RootDir)
+	walk.Resources.SetRootDirPath(camera.TmpDir)
 	if _, err := os.Stat(camera.Prog); errors.Is(err, os.ErrNotExist) {
 		if err := os.CopyFS(camera.ProgDir, hc.Binaries); err != nil {
 			return err
 		}
 	}
-	_, err := gui.Window().Run()
+
+	cam, err := video.NewCamera()
+	if err != nil {
+		panic(err)
+	}
+	defer cam.Destroy()
+
+	_, err = gui.Window(cam).Run()
 	return err
 }

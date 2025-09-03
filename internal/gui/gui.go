@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"path/filepath"
+
 	"github.com/MrRainbow0704/ProgettoIride/internal/camera"
 	"github.com/MrRainbow0704/ProgettoIride/internal/video"
 
@@ -13,14 +15,14 @@ var (
 	killVideo = false
 )
 
-func Window() d.MainWindow {
+func Window(cam *video.Camera) d.MainWindow {
 	icon, err := walk.NewIconFromFile("iride.ico")
 	if err != nil {
 		panic("Inpossibile creare l'immagine")
 	}
 
 	videoStream := new(walk.ImageView)
-	go videoLoop(videoStream)
+	go videoLoop(videoStream, cam)
 
 	return d.MainWindow{
 		AssignTo: &mw,
@@ -83,13 +85,19 @@ func Window() d.MainWindow {
 	}
 }
 
-func videoLoop(v *walk.ImageView) {
+func videoLoop(v *walk.ImageView, cam *video.Camera) {
 	for {
 		if killVideo {
 			break
 		}
 
-		out := video.CaptureFrame()
+		buf, err := cam.CaptureBuffer()
+		if err != nil {
+			continue
+		}
+		defer buf.Clear()
+		out := filepath.Join(camera.TmpDir, "frame.png")
+		buf.Process(out)
 		i, err := walk.Resources.Image(out)
 		if err != nil {
 			continue
