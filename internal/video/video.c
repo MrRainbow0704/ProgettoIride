@@ -2,25 +2,24 @@
 #include <assert.h>
 #include <png.h>
 
-
-int camera_init(ArvCamera* camera, GError* error) {
-    camera = arv_camera_new(NULL, &error);
-    if (error != NULL) {
+int camera_init(ArvCamera* camera, GError** error) {
+    camera = arv_camera_new(NULL, error);
+    if (&error != NULL) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
-int camera_capture_buffer(ArvCamera* camera, void* outBuffer, GError* error) {
+int camera_capture_buffer(ArvCamera* camera, ArvBuffer** outBuffer, GError** error) {
     if (ARV_IS_CAMERA(camera)) {
-        ArvBuffer* buffer = arv_camera_acquisition(camera, 0, &error);
+        ArvBuffer* buffer = arv_camera_acquisition(camera, 0, error);
 
         if (ARV_IS_BUFFER(buffer)) {
-            outBuffer = buffer;
+            *outBuffer = buffer;
             return EXIT_SUCCESS;
         }
 
-        if (error != NULL) {
+        if (&error != NULL) {
             return EXIT_FAILURE;
         }
     } else {

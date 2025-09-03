@@ -25,10 +25,10 @@ type Buffer struct {
 
 func NewCamera() (*Camera, error) {
 	cam := &C.ArvCamera{}
-	err := &C.GError{}
+	err := (**C.GError)(C.malloc(C.size_t(unsafe.Sizeof(C.GError{}))))
 	out := C.camera_init(cam, err)
 	if out != 0 {
-		return &Camera{}, fmt.Errorf("camera_init failed with error code %d: %s", out, C.GoString(err.message))
+		return &Camera{}, fmt.Errorf("camera_init failed with error code %d: %s", out, C.GoString((*err).message))
 	}
 
 	return &Camera{ptr: cam}, nil
@@ -40,14 +40,14 @@ func (cam *Camera) Destroy() {
 }
 
 func (cam *Camera) CaptureBuffer() (*Buffer, error) {
-	err := &C.GError{}
-	buf := unsafe.Pointer(nil)
+	buf := (**C.ArvBuffer)(C.malloc(C.size_t(unsafe.Sizeof(C.ArvBuffer{}))))
+	err := (**C.GError)(C.malloc(C.size_t(unsafe.Sizeof(C.GError{}))))
 	out := C.camera_capture_buffer(cam.ptr, buf, err)
 	if out != 0 {
-		return &Buffer{}, fmt.Errorf("camera_capture_buffer failed with error code %d: %s", out, C.GoString(err.message))
+		return &Buffer{}, fmt.Errorf("camera_capture_buffer failed with error code %d: %s", out, C.GoString((*err).message))
 	}
 
-	return &Buffer{ptr: (*C.ArvBuffer)(buf)}, nil
+	return &Buffer{ptr: (*C.ArvBuffer)(*buf)}, nil
 }
 
 func (buf *Buffer) Process(filename string) {
