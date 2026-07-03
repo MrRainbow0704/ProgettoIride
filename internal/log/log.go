@@ -11,140 +11,153 @@ package log
 import (
 	"context"
 	"fmt"
-	"log"
+	"io"
 	"log/slog"
 	"os"
+	"runtime"
 
 	"github.com/MrRainbow0704/ProgettoIride/internal/version"
 )
 
-var (
-	logger    *slog.Logger
-	WebLogger *log.Logger
-)
+var logger *slog.Logger
 
 const (
 	LevelPanic = slog.Level(10)
 	LevelFatal = slog.Level(12)
 )
 
-func init() {
-	var handler slog.Handler = slog.NewJSONHandler(
-		os.Stderr,
-		&slog.HandlerOptions{
-			AddSource: true,
-			Level:     slog.LevelInfo,
-		},
-	)
-	if version.IsDev() {
-		handler = slog.NewTextHandler(
-			os.Stderr,
+func LoadLogger(writers ...io.Writer) {
+	logger = slog.New(
+		slog.NewJSONHandler(
+			io.MultiWriter(writers...),
 			&slog.HandlerOptions{
-				AddSource: true,
-				Level:     slog.LevelDebug,
+				ReplaceAttr: replaceAttr,
+				Level:       slog.LevelInfo,
 			},
-		)
-	}
-	logger = slog.New(handler)
-	WebLogger = slog.NewLogLogger(logger.WithGroup("web").Handler(), slog.LevelInfo)
+		),
+	)
 }
 
-func Debug(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
+func replaceAttr(groups []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.LevelKey {
+		switch a.Value.Any().(slog.Level) {
+		case LevelPanic:
+			a.Value = slog.StringValue("PANIC")
+		case LevelFatal:
+			a.Value = slog.StringValue("FATAL")
+		}
 	}
-	logger.LogAttrs(context.Background(), slog.LevelDebug, msg, vals...)
+	return a
 }
 
-func Debugf(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
+func getSource() slog.Attr {
+	pc, file, line, ok := runtime.Caller(2)
+	if !ok {
+		return slog.Attr{}
 	}
-	logger.LogAttrs(context.Background(), slog.LevelDebug, fmt.Sprintf(msg, a), vals...)
+
+	funcName := "unknown"
+	if details := runtime.FuncForPC(pc); details != nil {
+		funcName = details.Name()
+	}
+
+	return slog.GroupAttrs("source",
+		slog.String("function", funcName),
+		slog.String("file", file),
+		slog.Int("line", line),
+	)
 }
 
-func Info(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
+func Debug(msg string) {
+	if !version.IsDev() {
+		return
 	}
-	logger.LogAttrs(context.Background(), slog.LevelInfo, msg, vals...)
+	logger.LogAttrs(
+		context.Background(), slog.LevelDebug,
+		msg, getSource(),
+	)
 }
 
-func Infof(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
+func Debugf(msg string, a ...any) {
+	if !version.IsDev() {
+		return
 	}
-	logger.LogAttrs(context.Background(), slog.LevelInfo, fmt.Sprintf(msg, a), vals...)
+	logger.LogAttrs(
+		context.Background(), slog.LevelDebug,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
 }
 
-func Warn(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), slog.LevelWarn, msg, vals...)
+func Info(msg string) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelInfo,
+		msg, getSource(),
+	)
 }
 
-func Warnf(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), slog.LevelWarn, fmt.Sprintf(msg, a), vals...)
+func Infof(msg string, a ...any) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelInfo,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
 }
 
-func Error(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), slog.LevelError, msg, vals...)
+func Warn(msg string) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelWarn,
+		msg, getSource(),
+	)
 }
 
-func Errorf(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), slog.LevelError, fmt.Sprintf(msg, a), vals...)
+func Warnf(msg string, a ...any) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelWarn,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
 }
 
-func Panic(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), LevelPanic, msg, vals...)
+func Error(msg string) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelError,
+		msg, getSource(),
+	)
+}
+
+func Errorf(msg string, a ...any) {
+	logger.LogAttrs(
+		context.Background(), slog.LevelError,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
+}
+
+func Panic(msg string) {
+	logger.LogAttrs(
+		context.Background(), LevelPanic,
+		msg, getSource(),
+	)
 	panic(msg)
 }
 
-func Panicf(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), LevelPanic, fmt.Sprintf(msg, a), vals...)
+func Panicf(msg string, a ...any) {
+	logger.LogAttrs(
+		context.Background(), LevelPanic,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
 	panic(msg)
 }
 
-func Fatal(msg string, args map[string]any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), LevelFatal, msg, vals...)
+func Fatal(msg string) {
+	logger.LogAttrs(
+		context.Background(), LevelFatal,
+		msg, getSource(),
+	)
 	os.Exit(1)
 }
 
-func Fatalf(msg string, args map[string]any, a ...any) {
-	vals := []slog.Attr{}
-	for k, v := range args {
-		vals = append(vals, slog.Attr{Key: k, Value: slog.AnyValue(v)})
-	}
-	logger.LogAttrs(context.Background(), LevelFatal, fmt.Sprintf(msg, a), vals...)
+func Fatalf(msg string, a ...any) {
+	logger.LogAttrs(
+		context.Background(), LevelFatal,
+		fmt.Sprintf(msg, a...), getSource(),
+	)
 	os.Exit(1)
 }

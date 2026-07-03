@@ -1,0 +1,17 @@
+{
+  "iride": "Iride",
+  "settings": "Settings",
+  "mirror": "Mirror",
+  "flip": "Flip",
+  "version": "Version",
+  "crosshair": "Crosshair",
+  "placeholder_camera": "(Select Camera)",
+  "placeholder_FFPath": "(Enter FFmpeg Path)",
+  "placeholder_resolution": "(Select Resolution)",
+  "errror_invalid_ffmpeg": "Executable not valid",
+  "errror_empty_ffmpeg": "use 'ffmpeg' as default",
+  "form_camera_label": "Device ID",
+  "form_ffmpeg_label": "FFmpeg Path",
+  "form_resolution_label": "Resolution",
+  "dev_build": "Development Build"
+}

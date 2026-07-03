@@ -1,0 +1,17 @@
+{
+  "iride": "Iride",
+  "settings": "Impostazioni",
+  "mirror": "Specchio",
+  "flip": "Capovolgi",
+  "version": "Versione",
+  "crosshair": "Reticolo",
+  "placeholder_camera": "(Seleziona Camera)",
+  "placeholder_FFPath": "(Inserisci Percorso FFmpeg)",
+  "placeholder_resolution": "(Seleziona Risoluzione)",
+  "errror_invalid_ffmpeg": "Eseguibile non valido",
+  "errror_empty_ffmpeg": "usa 'ffmpeg' come default",
+  "form_camera_label": "ID Dispositivo",
+  "form_ffmpeg_label": "Percorso FFmpeg",
+  "form_resolution_label": "Risoluzione",
+  "dev_build": "Build di Sviluppo"
+}

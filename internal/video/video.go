@@ -1,62 +1,76 @@
-//go:build windows
-
-// Il pacchetto video espone le funzioni dell'SDK in C++ di
-// ActiveSilicon per la cattura di video.
+// Il pacchetto video espone le funzioni per la gestione
+// della cattura video da una webcam
 package video
 
-/*
-#cgo pkg-config: aravis-0.8 glib-2.0 libpng
-#include "stdlib.h"
-#include "video.h"
-*/
-import "C"
 import (
 	"fmt"
-	"unsafe"
+	"image"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"github.com/MrRainbow0704/ProgettoIride/internal/config"
+	"github.com/MrRainbow0704/ProgettoIride/internal/log"
 )
 
-type Camera struct {
-	ptr *C.ArvCamera
+var conf = config.Get()
+var stopChan chan struct{} = make(chan struct{})
+var isBackgroundVideoLoopRunning = false
+
+type Camera interface {
+	StartCapture() error
+	CaptureBuffer() (*image.RGBA, error)
+	StopCapture() error
 }
 
-type Buffer struct {
-	ptr *C.ArvBuffer
+func backgroundVideoLoop(cam Camera, ev *canvas.Image, stop <-chan struct{}) {
+	defer cam.StopCapture()
+
+	for {
+		select {
+		case <-stop:
+			log.Info("stopping camera capture...")
+			return
+		default:
+			frame, err := cam.CaptureBuffer()
+			if err != nil {
+				log.Errorf("failed to capture frame: %v", err)
+				continue
+			}
+
+			if ev == nil || ev.Image == nil {
+				log.Info("embedded video image is nil, skipping frame update")
+				continue
+			}
+
+			fyne.Do(func() {
+				ev.Image = frame
+				ev.Refresh()
+			})
+		}
+	}
 }
 
-func NewCamera() (*Camera, error) {
-	cam := &C.ArvCamera{}
-	err := (**C.GError)(C.malloc(C.size_t(unsafe.Sizeof(C.GError{}))))
-	out := C.camera_init(cam, err)
-	if out != 0 {
-		return &Camera{}, fmt.Errorf("camera_init failed with error code %d: %s", out, C.GoString((*err).message))
+// Starts a gorutine that constatly fetches frames from the given camera
+// and updates the given image with the frame.
+// Can be stopped by calling [StopBackgroundVideoLoop].
+func StartBackgroundVideoLoop(cam Camera, ev *canvas.Image) error {
+	if isBackgroundVideoLoopRunning {
+		return fmt.Errorf("there can only be one BackgroundVideoLoop running at a time")
 	}
 
-	return &Camera{ptr: cam}, nil
-}
-
-func (cam *Camera) Destroy() {
-	C.camera_delete(cam.ptr)
-	cam.ptr = nil
-}
-
-func (cam *Camera) CaptureBuffer() (*Buffer, error) {
-	buf := (**C.ArvBuffer)(C.malloc(C.size_t(unsafe.Sizeof(C.ArvBuffer{}))))
-	err := (**C.GError)(C.malloc(C.size_t(unsafe.Sizeof(C.GError{}))))
-	out := C.camera_capture_buffer(cam.ptr, buf, err)
-	if out != 0 {
-		return &Buffer{}, fmt.Errorf("camera_capture_buffer failed with error code %d: %s", out, C.GoString((*err).message))
+	err := cam.StartCapture()
+	if err != nil {
+		return err
 	}
 
-	return &Buffer{ptr: (*C.ArvBuffer)(*buf)}, nil
+	go backgroundVideoLoop(cam, ev, stopChan)
+	isBackgroundVideoLoopRunning = true
+
+	return nil
 }
 
-func (buf *Buffer) Process(filename string) {
-	cstr := C.CString(filename)
-	defer C.free(unsafe.Pointer(cstr))
-	C.camera_buffer_process(buf.ptr, cstr)
-}
-
-func (buf *Buffer) Clear() {
-	C.camera_buffer_clear(buf.ptr)
-	buf.ptr = nil
+// Stops the gorutine started by [StartBackgroundVideoLoop].
+func StopBackgroundVideoLoop() {
+	stopChan <- struct{}{}
+	isBackgroundVideoLoopRunning = false
 }

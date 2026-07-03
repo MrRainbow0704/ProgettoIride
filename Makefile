@@ -1,48 +1,26 @@
-define \n
+MODULE_PATH := $(shell go list -m)
+VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+ifndef RELEASE
+	VERSION := $(VERSION)-dev
+endif
+LDFLAGS := -X '$(MODULE_PATH)/internal/version.version=$(VERSION)' -H windowsgui
 
+.PHONY: run before pre build post
 
-endef
-VERSION := $(file < ./version.txt)
-AIR_CONF := $(file < ./.air.toml)
-PACKAGE := github.com/MrRainbow0704/ProgettoIride
-LDFLAGS := -ldflags="-X '$(PACKAGE)/internal/version.version=$(VERSION)-dev'"
-LDFLAGS_R := -ldflags="-X '$(PACKAGE)/internal/version.version=$(VERSION)' -H windowsgui"
-LDFLAGS_L := $(subst /,\/,$(LDFLAGS_R))
-AIR_CONF := $(subst @LDFLAGS@,$(subst ",\",$(LDFLAGS)),$(AIR_CONF))
-AIR_CONF := $(subst ${\n}${\n},${\n},$(AIR_CONF))
-.PHONY: build release clear go go_r
+run: before pre build post
 
-build: clear go
+build:
+	go build -ldflags "$(LDFLAGS)" -o ./bin/ ./cmd/...
 
-release: clear go_r
-
-go:
-	go mod download
+before:
 	go mod tidy
-	go tool rsrc -ico iride.ico -manifest iride.manifest
-	bash -c "mv *.syso ./cmd/iride/"
-	go build $(LDFLAGS) -o ./bin/ ./cmd/...
-	bash -c "rm -f ./cmd/iride/*.syso"
+	go vet ./...
 
-go_r:
-	go mod download
-	go mod tidy
-	go tool rsrc -ico iride.ico -manifest iride.manifest
-	bash -c "mv *.syso ./cmd/iride/"
-	go build $(LDFLAGS_R) -o ./bin/ ./cmd/...
-	bash -c "rm -f ./cmd/iride/*.syso"
+pre:
+	cp iride.manifest ./cmd/iride/
+	cd ./cmd/iride; sed -i 's/$$(VERSION)/$(shell echo $(VERSION) | cut -c2-)/g' iride.manifest
+	cd ./cmd/iride; go tool rsrc -ico ./../../internal/gui/assets/iride.ico -manifest ./iride.manifest
+	cd ./internal/gui/assets; go tool fyne bundle -prefix Resource -pkg assets -o ico.go iride.ico
 
-live:
-	go mod download
-	go mod tidy
-	go tool rsrc -ico iride.ico -manifest iride.manifest
-	bash -c "mv *.syso ./cmd/iride/"
-	mkdir tmp
-	echo. > ./tmp/.air.toml
-	echo $(subst ${\n}, >> ./tmp/.air.toml ${\n}echo ,$(AIR_CONF)) >> ./tmp/.air.toml
-	go tool air -c ./tmp/.air.toml
-
-clear:
-	bash -c "rm -rf ./bin"
-	bash -c "rm -rf ./tmp"
-	bash -c "rm -f ./cmd/iride/*.syso"
+post:
+	cd ./cmd/iride; rm -f *.syso iride.manifest

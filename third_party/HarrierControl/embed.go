@@ -2,5 +2,6 @@ package harriercontrol
 
 import "embed"
 
-//go:embed *.dll HarrierControl.exe
+
+//go:embed *.dll *.flash HarrierControl.exe
 var Binaries embed.FS

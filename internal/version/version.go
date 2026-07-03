@@ -9,5 +9,6 @@ func Get() string {
 }
 
 func IsDev() bool {
-	return strings.Contains(version, "dev")
+	v := strings.ToLower(version)
+	return strings.Contains(v, "dev") || strings.Contains(v, "snapshot")
 }

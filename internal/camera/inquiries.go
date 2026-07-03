@@ -1,16 +1,32 @@
 package camera
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+type InvalidResponseError struct {
+	Response []byte
+}
+
+func (e InvalidResponseError) Error() string {
+	return fmt.Sprintf("invalid response: %#v", e.Response)
+}
+
+func NewInvalidResponseError(response []byte) error {
+	return InvalidResponseError{Response: response}
+}
 
 type CameraVersion struct {
-	Major uint8
-	Minor uint8
-	Sub   uint8
+	Major uint
+	Minor uint
+	Sub   uint
 }
 
 type CameraInfo struct {
-	Revision uint8
-	Variant  uint8
+	Revision uint
+	Variant  uint
 }
 
 type CameraHealth struct {
@@ -20,92 +36,95 @@ type CameraHealth struct {
 	CameraCommsInitialized bool
 	IsRunning              bool
 	Errors                 bool
-	Temperature            uint8
+	Temperature            uint
 }
 
 type CameraHardwareInfo struct {
-	ProjectCode  uint8
-	ProjectBoard uint8
-	BoardIssue   uint8
-	BuildMSB     uint8
-	BuildLSB     uint8
+	ProjectCode  uint
+	ProjectBoard uint
+	BoardIssue   uint
+	BuildMSB     uint
+	BuildLSB     uint
 }
 
-type CameraError uint8
+type CameraErrorValue uint
 
-func (c CameraError) Error() string {
+func (c CameraErrorValue) Error() string {
 	switch c {
-	case 0x00:
+	case 0x0:
 		return "No error"
-	case 0x01:
+	case 0x1:
 		return "FPGA core temperature"
-	case 0x02:
+	case 0x2:
 		return "USB 5V power rail fault"
-	case 0x03:
+	case 0x3:
 		return "Main power rail fault"
-	case 0x04:
+	case 0x4:
 		return "1V8 power rail fault"
-	case 0x05:
+	case 0x5:
 		return "3V3 power rail fault"
-	case 0x06:
+	case 0x6:
 		return "1V1 power rail fault"
-	case 0x07:
+	case 0x7:
 		return "2V5 power rail fault"
-	case 0x08:
+	case 0x8:
 		return "5V HDMI DDC fault"
-	case 0x09:
+	case 0x9:
 		return "Camera comms timeout"
-	case 0x0A:
+	case 0xA:
 		return "Camera video mode/LVDS link width setup fault"
-	case 0x0B:
+	case 0xB:
 		return "LVDS clock loss of lock"
-	case 0x0C:
+	case 0xC:
 		return "Reserved"
-	case 0x0D:
+	case 0xD:
 		return "Pixel clock loss of lock"
-	case 0x0E:
+	case 0xE:
 		return "USB error"
-	case 0x0F:
+	case 0xF:
 		return "Firmware type error"
 	default:
-		return ""
+		return "Unknown error code: " + strings.ToUpper(strconv.FormatUint(uint64(c), 16))
 	}
 }
 
 func GetVersion() (CameraVersion, error) {
-	out, err := sendCommandWithOutput(cmd_query_version)
+	out, err := sendVISCACommandWithOutput(inqCIBVersion)
 	if err != nil {
 		return CameraVersion{}, err
 	}
+
 	// Expected output: [0xA0, 0x50, r1, r2, r3, 0xFF]
 	// r1 = major version
 	// r2 = minor version
 	// r3 = sub version
-	if out[0] != 0xA0 || out[1] != 0x50 || out[5] != 0xFF {
-		return CameraVersion{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	if out[0] != 0x90 || out[1] != 0x50 || out[5] != 0xFF {
+		return CameraVersion{}, NewInvalidResponseError(out)
 	}
-	return CameraVersion{Major: out[2], Minor: out[3], Sub: out[4]}, nil
+	return CameraVersion{Major: uint(out[2]), Minor: uint(out[3]), Sub: uint(out[4])}, nil
 }
 
 func GetInfo() (CameraInfo, error) {
-	out, err := sendCommandWithOutput(cmd_query_info)
+	out, err := sendVISCACommandWithOutput(inqCIBInfo)
 	if err != nil {
 		return CameraInfo{}, err
 	}
+
 	// Expected output: [0xA0, 0x50, r1, r2, 0xFF]
 	// r1 = hardware revision
 	// r2 = board variant
-	if out[0] != 0xA0 || out[1] != 0x50 || out[4] != 0xFF {
-		return CameraInfo{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	if out[0] != 0x90 || out[1] != 0x50 || out[4] != 0xFF {
+		return CameraInfo{}, NewInvalidResponseError(out)
 	}
-	return CameraInfo{Revision: out[2], Variant: out[3]}, nil
+	return CameraInfo{Revision: uint(out[2]), Variant: uint(out[3])}, nil
 }
 
 func GetHealth() (CameraHealth, error) {
-	out, err := sendCommandWithOutput(cmd_query_health)
+	out, err := sendVISCACommandWithOutput(inqCIBHealth)
 	if err != nil {
 		return CameraHealth{}, err
 	}
+
 	// Expected output: [0xA0, 0x50, r1, r2, 0xFF]
 	// r1 = status
 	//   Bit 0 = Voltage OK
@@ -117,8 +136,8 @@ func GetHealth() (CameraHealth, error) {
 	//   Bit 6 = Running / OK
 	//   Bit 7 = Error state
 	// r2 =  temperature (+60° offset)
-	if out[0] != 0xA0 || out[1] != 0x50 || out[4] != 0xFF {
-		return CameraHealth{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	if out[0] != 0x90 || out[1] != 0x50 || out[4] != 0xFF {
+		return CameraHealth{}, NewInvalidResponseError(out)
 	}
 	s := out[2]
 	return CameraHealth{
@@ -128,42 +147,110 @@ func GetHealth() (CameraHealth, error) {
 		CameraCommsInitialized: (s & 0b100000) != 0,
 		IsRunning:              (s & 0b1000000) != 0,
 		Errors:                 (s & 0b10000000) != 0,
-		Temperature:            out[3] - 60,
+		Temperature:            uint(out[3]) - 60,
 	}, nil
 }
 
 func GetHardwareInfo() (CameraHardwareInfo, error) {
-	out, err := sendCommandWithOutput(cmd_query_health)
+	out, err := sendVISCACommandWithOutput(inqCIBHardware)
 	if err != nil {
 		return CameraHardwareInfo{}, err
 	}
+
 	// Expected output: [0xA0, 0x50, r1, r2, r3, r4, r5, 0xFF]
 	// r1 = project code
 	// r2 = project board
 	// r3 = board issue
 	// r4 = build MSB
 	// r5 = build LSB
-	if out[0] != 0xA0 || out[1] != 0x50 || out[7] != 0xFF {
-		return CameraHardwareInfo{}, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	if out[0] != 0x90 || out[1] != 0x50 || out[7] != 0xFF {
+		return CameraHardwareInfo{}, NewInvalidResponseError(out)
 	}
 	return CameraHardwareInfo{
-		ProjectCode:  out[2],
-		ProjectBoard: out[3],
-		BoardIssue:   out[4],
-		BuildMSB:     out[5],
-		BuildLSB:     out[6],
+		ProjectCode:  uint(out[2]),
+		ProjectBoard: uint(out[3]),
+		BoardIssue:   uint(out[4]),
+		BuildMSB:     uint(out[5]),
+		BuildLSB:     uint(out[6]),
 	}, nil
 }
 
-func GetError() (CameraError, error) {
-	out, err := sendCommandWithOutput(cmd_query_info)
+func GetErrorValue() (CameraErrorValue, error) {
+	out, err := sendVISCACommandWithOutput(inqCIBError)
 	if err != nil {
 		return 0, err
 	}
+
 	// Expected output: [0xA0, 0x50, r1, 0xFF]
 	// r1 = error
-	if out[0] != 0xA0 || out[1] != 0x50 || out[3] != 0xFF {
-		return 0, fmt.Errorf("la risposta ricevuta, %+v, non è valida", out)
+	if out[0] != 0x90 || out[1] != 0x50 || out[3] != 0xFF {
+		return CameraErrorValue(0), NewInvalidResponseError(out)
 	}
-	return CameraError(out[2]), nil
+	return CameraErrorValue(out[2]), nil
+}
+
+func getMirror() (bool, error) {
+	out, err := sendVISCACommandWithOutput(inqCameraMirror)
+	if err != nil {
+		return false, err
+	}
+	
+	// Expected output: [0xA0, 0x50, r1, 0xFF]
+	// r1 = error
+	if out[0] != 0x90 || out[1] != 0x50 || out[3] != 0xFF {
+		return false, NewInvalidResponseError(out)
+	}
+	return out[2] == 0x02, nil
+}
+
+func getFlip() (bool, error) {
+	out, err := sendVISCACommandWithOutput(inqCameraFlip)
+	if err != nil {
+		return false, err
+	}
+
+	// Expected output: [0xA0, 0x50, r1, 0xFF]
+	// r1 = error
+	if out[0] != 0x90 || out[1] != 0x50 || out[3] != 0xFF {
+		return false, NewInvalidResponseError(out)
+	}
+	return out[2] == 0x02, nil
+}
+
+func getZoom() (uint, error) {
+	out, err := sendVISCACommandWithOutput(inqCameraZoom)
+	if err != nil {
+		return 0, err
+	}
+
+	// Expected output: [0xA0, 0x50, r1, r2, r3, r4, 0xFF]
+	// r1, r2, r3, r4 = zoom value
+	if out[0] != 0x90 || out[1] != 0x50 || out[6] != 0xFF {
+		return 0, NewInvalidResponseError(out)
+	}
+
+	var z uint
+	for i := range 4 {
+		z |= uint(out[i+2]&0xF) << ((3 - i) * 4)
+	}
+	return z, nil
+}
+
+func getResolution() (Resolution, error) {
+	out, err := sendVISCACommandWithOutput(inqCameraResolution)
+	if err != nil {
+		return 0, err
+	}
+
+	// Expected output: [0xA0, 0x50, r1, r2, 0xFF]
+	// r1, r2 = resolution value
+	if out[0] != 0x90 || out[1] != 0x50 || out[4] != 0xFF {
+		return 0, NewInvalidResponseError(out)
+	}
+
+	var z uint
+	for i := range 2 {
+		z |= uint(out[i+2]&0xF) << ((3 - i) * 4)
+	}
+	return Resolution(z), nil
 }
