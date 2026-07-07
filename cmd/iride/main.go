@@ -55,7 +55,7 @@ func run() error {
 	// Inizializza la fotocamera
 	if conf.DeviceID != "" {
 		log.Infof("initializing camera with device id: %s", conf.DeviceID)
-		cam := video.NewCamera(conf.DeviceID, camera.Resolution(conf.Resolution))
+		cam := video.NewCamera(conf.DeviceID, camera.GetResolution())
 		if cam == nil {
 			return fmt.Errorf("failed to initialize camera with device id: %s", conf.DeviceID)
 		}

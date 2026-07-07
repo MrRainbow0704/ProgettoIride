@@ -151,7 +151,7 @@ func openConfigWindow(a fyne.App) {
 		resolutionsMap[res.String()] = res
 	}
 	formSelectResolution := widget.NewSelect(resolutions, func(selected string) {})
-	formSelectResolution.SetSelected(camera.Resolution(conf.Resolution).String())
+	formSelectResolution.SetSelected(camera.GetResolution().String())
 	formSelectResolution.PlaceHolder = lang.L("placeholder_resolution")
 
 	form := widget.NewForm(
@@ -164,13 +164,13 @@ func openConfigWindow(a fyne.App) {
 		// la nuova configurazione
 		conf.DeviceID = formEntryDeviceID.Selected
 		conf.FFPath = formEntryFFPath.Text
-		conf.Resolution = uint(resolutionsMap[formSelectResolution.Selected])
+		camera.SetResolution(resolutionsMap[formSelectResolution.Selected])
 		if err := config.SaveConfig(); err != nil {
 			log.Errorf("Failed to save configuration: %v", err)
 		} else {
 			log.Infof("Saved new configuration: %+v", conf)
 			video.StopBackgroundVideoLoop()
-			cam := video.NewCamera(conf.DeviceID, camera.Resolution(conf.Resolution))
+			cam := video.NewCamera(conf.DeviceID, camera.GetResolution())
 			if cam == nil {
 				log.Errorf("Failed to initialize camera with device id: %s", conf.DeviceID)
 				return

@@ -14,14 +14,12 @@ import (
 type Config struct {
 	DeviceID   string `json:"device_id"`
 	FFPath     string `json:"ffmpeg_path"`
-	Resolution uint   `json:"resolution"`
 }
 
 var conf Config
 var defaultConf = Config{
 	DeviceID:   "",
 	FFPath:     "ffmpeg",
-	Resolution: 0x13,
 }
 
 var (
@@ -43,6 +41,7 @@ func init() {
 	BinDir = filepath.Join(RootDir, "bin")
 	LogDir = filepath.Join(RootDir, "log")
 	HCPath = filepath.Join(BinDir, "HarrierControl.exe")
+
 	for _, dir := range []string{RootDir, BinDir, LogDir} {
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			if err := os.MkdirAll(dir, 0755); err != nil {
